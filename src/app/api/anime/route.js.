@@ -1,0 +1,32 @@
+import { getRequestContext } from '@cloudflare/next-on-pages';
+
+// Wajib ditambahin biar Next.js tau ini jalan di Cloudflare (Edge)
+export const runtime = 'edge';
+
+export async function POST(req) {
+  try {
+    // Panggil database D1 kita
+    const db = getRequestContext().env.DB;
+    const data = await req.json();
+
+    // Query SQL untuk masukin data ke tabel 'animes'
+    await db.prepare(
+      `INSERT INTO animes (title, slug, poster_url, type, studio, release_year, status, genres, synopsis) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      data.title, 
+      data.slug, 
+      data.poster, 
+      data.type, 
+      data.studio, 
+      data.release_year, 
+      data.status, 
+      data.genres, 
+      data.synopsis
+    ).run();
+
+    return Response.json({ success: true, message: 'Anime berhasil disimpan!' });
+  } catch (error) {
+    return Response.json({ success: false, message: error.message }, { status: 500 });
+  }
+}
